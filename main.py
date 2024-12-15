@@ -1,3 +1,5 @@
+import random
+
 import pygame
 
 
@@ -11,10 +13,11 @@ class Player:
         self.hitbox.x = x
         self.hitbox.y = y
         self.speed = speed
-
+        self.bullets = []
     def draw(self, window):
         window.blit(self.texture, self.hitbox)
-
+        for bullet in self.bullets:
+            bullet.draw(window)
 
 
     def move(self):
@@ -31,6 +34,35 @@ class Player:
 
         if keys[pygame.K_UP]:
             self.hitbox.y -= self.speed
+        if keys[pygame.K_v]:
+            self.bullets.append(Bullet("bullet (1).png",
+                                       20, 40,
+                                       self.hitbox.x, self.hitbox.y,
+                                       10))
+        for bullet in self.bullets:
+            bullet.move()
+
+
+
+class Bullet:
+    def __init__(self,  skin, width, height, x, y, speed):
+        self.texture = pygame.image.load(skin)
+        self.texture = pygame.transform.scale(self.texture, [width, height])
+        self.hitbox = self.texture.get_rect()
+        self.hitbox.x = x
+        self.hitbox.y = y
+        self.speed = speed
+        self.bullets = []
+
+    def draw(self, window):
+        window.blit(self.texture, self.hitbox)
+
+    def move(self):
+        self.hitbox.y -= self.speed
+
+
+
+
 
 
 
@@ -40,23 +72,19 @@ class Player:
 
 
 class Enemy:
-    def __init__(self, width, height, x, y, skin):
+    def __init__(self, skin, width, height, x, y,speed):
         self.texture = pygame.image.load(skin)
         self.texture = pygame.transform.scale(self.texture, [width, height])
         self.hitbox = self.texture.get_rect()
         self.hitbox.x = x
         self.hitbox.y = y
-
+        self.speed = speed
 
     def draw(self, window):
         window.blit(self.texture, self.hitbox)
 
-
-
-
-
-
-
+    def move(self):
+        self.hitbox.y += self.speed
 
 
 
@@ -97,7 +125,18 @@ pygame.init()
 window = pygame.display.set_mode([700, 500])
 fps = pygame.time.Clock()
 player = Player(3, 65, 85, 147, 129, "rocket (1).png")
-enemy = Enemy(55, 45, 147, 129, "ufo (1).png")
+enemies = []
+y = 200
+for i in range(10):
+    enemies.append(Enemy("ufo (1).png", 50, 50, random.randint(0, 650), y, 5))
+    y -= 100
+
+score = 0
+score_lbl = pygame.font.Font(None, 23).render("Score: " + str(score), True, [0,0,0])
+
+
+
+
 background = pygame.image.load("galaxy (1).jpg")
 background = pygame.transform.scale(background, [700, 500])
 game = True
@@ -108,26 +147,34 @@ while True:
         if event.type == pygame.QUIT:
             pygame.quit()
 
+    for e in enemies:
+        for b in player.bullets:
+            if e.hitbox.colliderect(b.hitbox):
+                b.hitbox.x = 5000
+                player.bullets.remove(b)
+                e.hitbox.y = -100
+                e.hitbox.x = random.randint(0, 650)
+                score += 1
+                break
+
+    score_lbl = pygame.font.Font(None, 23).render("Score: " + str(score), True, [0, 0, 0])
+
+
+
 
     player.move()
     window.fill([123, 123,  123])
     window.blit(background,[0, 0])
     player.draw(window)
-    enemy.draw(window)
+    for e in enemies:
+        e.draw(window)
     pygame.display.flip()
 
-
-
-
-
-
-
-
-
-
-
-
-
+    for e in enemies:
+        e.move()
+        if e.hitbox.y > 500:
+            e.hitbox.y = -100
+            e.hitbox.x = random.randint(0, 650)
 
 
 
