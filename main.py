@@ -2,6 +2,7 @@ import random
 
 import pygame
 
+from file import*
 
 
 
@@ -120,61 +121,69 @@ class Enemy:
 
 
 
-
-pygame.init()
-window = pygame.display.set_mode([700, 500])
-fps = pygame.time.Clock()
-player = Player(3, 65, 85, 147, 129, "rocket (1).png")
-enemies = []
-y = 200
-for i in range(10):
-    enemies.append(Enemy("ufo (1).png", 50, 50, random.randint(0, 650), y, 5))
-    y -= 100
-
-score = 0
-score_lbl = pygame.font.Font(None, 23).render("Score: " + str(score), True, [0,0,0])
+def game():
+    pygame.init()
+    window = pygame.display.set_mode([700, 500])
+    fps = pygame.time.Clock()
+    data = read_from_file()
+    player = Player(3, 65, 85, 147, 129, data['skin'])
+    enemies = []
+    y = 200
+    for i in range(10):
+        enemies.append(Enemy("ufo (1).png", 50, 50, random.randint(0, 650), y, 5))
+        y -= 100
 
 
+    score = data["score"]
+    write_in_file(data)
+    score_lbl = pygame.font.Font(None, 23).render("Score: " + str(score), True, [0,0,0])
 
 
-background = pygame.image.load("galaxy (1).jpg")
-background = pygame.transform.scale(background, [700, 500])
-game = True
 
 
-while True:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit()
+    background = pygame.image.load("galaxy (1).jpg")
+    background = pygame.transform.scale(background, [700, 500])
+    game = True
 
-    for e in enemies:
-        for b in player.bullets:
-            if e.hitbox.colliderect(b.hitbox):
-                b.hitbox.x = 5000
-                player.bullets.remove(b)
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                return
+
+        for e in enemies:
+            for b in player.bullets:
+                if e.hitbox.colliderect(b.hitbox):
+                    b.hitbox.x = 5000
+                    player.bullets.remove(b)
+                    e.hitbox.y = -100
+                    e.hitbox.x = random.randint(0, 650)
+                    score += 1
+                    data = read_from_file()
+                    data["score"] = score
+                    write_in_file(data)
+                    break
+
+        score_lbl = pygame.font.Font(None, 23).render("Score: " + str(score), True, [255, 0, 255])
+
+
+
+
+        player.move()
+        window.fill([123, 123,  123])
+        window.blit(background,[0, 0])
+        player.draw(window)
+        for e in enemies:
+            e.draw(window)
+        window.blit(score_lbl,[600, 10])
+        pygame.display.flip()
+
+        for e in enemies:
+            e.move()
+            if e.hitbox.y > 500:
                 e.hitbox.y = -100
                 e.hitbox.x = random.randint(0, 650)
-                score += 1
-                break
-
-    score_lbl = pygame.font.Font(None, 23).render("Score: " + str(score), True, [0, 0, 0])
-
-
-
-
-    player.move()
-    window.fill([123, 123,  123])
-    window.blit(background,[0, 0])
-    player.draw(window)
-    for e in enemies:
-        e.draw(window)
-    pygame.display.flip()
-
-    for e in enemies:
-        e.move()
-        if e.hitbox.y > 500:
-            e.hitbox.y = -100
-            e.hitbox.x = random.randint(0, 650)
 
 
 
@@ -222,4 +231,4 @@ while True:
 
 
 
-    fps.tick(60)
+        fps.tick(60)
